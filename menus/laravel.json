@@ -1,0 +1,14 @@
+{
+  "menu": [
+    {
+      "id": "tools",
+      "submenu": [
+        {
+          "label": "Generate Laravel Migrations...",
+          "id": "tools.laravel.generate",
+          "command": "laravel:generate"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,20 @@
+{
+  "name": "staruml-laravel",
+  "title": "StarUML Laravel",
+  "description": "Generate Laravel Migrations from StarUML UML Class Diagrams.",
+  "homepage": "https://github.com/devhammed/staruml-laravel",
+  "version": "1.0.0",
+  "keywords": [
+    "staruml",
+    "laravel"
+  ],
+  "author": {
+    "name": "Hammed Oyedele",
+    "email": "itz.harmid@gmail.com",
+    "url": "https://github.com/devhammed"
+  },
+  "license": "MIT",
+  "engines": {
+    "staruml": ">=3.0.0"
+  }
+}
