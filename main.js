@@ -302,7 +302,7 @@ function getOutputFolderAndGenerateMigrations (diagram) {
 
 function handleGenerateCommand (diagram, folder) {
   // If diagram is not assigned, popup ElementPicker
-  if (!diagram) {
+  if (!diagram || !diagram instanceof type.UMLClassDiagram) {
     app.elementPickerDialog
       .showDialog(
         'Select a class diagram to generate the classes migrations',
