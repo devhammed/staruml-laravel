@@ -1,6 +1,8 @@
 const fs = require('fs')
 const path = require('path')
 const { noCase, pascalCase } = require('change-case')
+
+const baseEnum = require('./base-enum')
 const CodeWriter = require('./code-writer')
 
 function sanitizeTableName (name) {
@@ -232,11 +234,57 @@ function generateMigrations (diagram, folder) {
     )
   })
 
-  enumerations.forEach(enumeration => {
-    const writer = new CodeWriter()
-  })
+  if (enumerations.length > 0) {
+    const enumsDir = path.join(folder, 'Enums')
 
-  app.toast.info(`${tables.length} migrations generated successfully.`)
+    fs.mkdirSync(enumsDir)
+
+    fs.writeFileSync(path.join(enumsDir, 'BaseEnum.php'), baseEnum)
+
+    enumerations.forEach(({ name, literals }) => {
+      const writer = new CodeWriter()
+      const enumerationName = pascalCase(name)
+
+      writer.writeLines([
+        '<?php',
+        '',
+        'namespace App\\Enums;',
+        '',
+        `abstract class ${enumerationName} extends BaseEnum`,
+        '{'
+      ])
+
+      writer.indent()
+
+      literals.forEach(({ name, documentation }, index) => {
+        if (documentation !== '') {
+          writer.writeLine('/**')
+          writer.writeLines(documentation.split('\n').map(line => ` * ${line}`))
+          writer.writeLine(' */')
+        }
+
+        writer.writeLine(`public const ${name} = '${name}';`)
+
+        // if not last item, add a blank line after definition...
+        if (index !== literals.length - 1) {
+          writer.writeLine('')
+        }
+      })
+
+      writer.outdent()
+
+      writer.writeLines(['}', ''])
+
+      fs.writeFileSync(
+        path.join(enumsDir, `${enumerationName}.php`),
+        writer.getData()
+      )
+    })
+  }
+
+  app.toast.info(
+    `${tables.length} migrations and ${enumerations.length} enums generated successfully.`
+  )
 }
 
 function getOutputFolderAndGenerateMigrations (diagram) {
