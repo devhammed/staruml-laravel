@@ -2,12 +2,12 @@ const fs = require('fs')
 const path = require('path')
 const CodeWriter = require('./code-writer')
 
-function generateCode(diagram, folder) {
+function generateCode (diagram, folder) {
   diagram.ownedViews
-    .filter((view) => view instanceof type.UMLClassView)
-    .map((classView) => classView.model)
-    .filter((umlClass) => umlClass.stereotype === 'Table')
-    .forEach((table) => {
+    .filter(view => view instanceof type.UMLClassView)
+    .map(classView => classView.model)
+    .filter(umlClass => umlClass.stereotype === 'Table')
+    .forEach(table => {
       const writer = new CodeWriter()
 
       // do something badass here!
@@ -16,7 +16,20 @@ function generateCode(diagram, folder) {
     })
 }
 
-function handleGenerateCommand(diagram, folder) {
+function getOutputFolderAndGenerateCode (diagram) {
+  const file = app.dialogs.showOpenDialog(
+    'Select a folder where generated codes to be located',
+    null,
+    null,
+    { properties: ['openDirectory'] }
+  )
+
+  if (files && files.length > 0) {
+    generateCode(diagram, files[0])
+  }
+}
+
+function handleGenerateCommand (diagram, folder) {
   // If diagram is not assigned, popup ElementPicker
   if (!diagram) {
     app.elementPickerDialog
@@ -31,42 +44,20 @@ function handleGenerateCommand(diagram, folder) {
 
           // If folder is not assigned, popup Open Dialog to select a folder
           if (!folder) {
-            let files = app.dialogs.showOpenDialog(
-              'Select a folder where generated codes to be located',
-              null,
-              null,
-              { properties: ['openDirectory'] }
-            )
-
-            if (files && files.length > 0) {
-              folder = files[0]
-              generateCode(diagram, folder)
-            }
+            getOutputFolderAndGenerateCode(diagram)
           } else {
             generateCode(diagram, folder)
           }
         }
       })
+  } else if (!folder) {
+    getOutputFolderAndGenerateCode(diagram)
   } else {
-    // If folder is not assigned, popup Open Dialog to select a folder
-    if (!folder) {
-      var files = app.dialogs.showOpenDialog(
-        'Select a folder where generated codes to be located',
-        null,
-        null,
-        { properties: ['openDirectory'] }
-      )
-      if (files && files.length > 0) {
-        folder = files[0]
-        generateCode(diagram, folder)
-      }
-    } else {
-      generateCode(diagram, folder)
-    }
+    generateCode(diagram, folder)
   }
 }
 
-function init() {
+function init () {
   app.commands.register('laravel:generate', handleGenerateCommand)
 }
 
