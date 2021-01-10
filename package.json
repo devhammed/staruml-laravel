@@ -16,5 +16,8 @@
   "license": "MIT",
   "engines": {
     "staruml": ">=3.0.0"
+  },
+  "dependencies": {
+    "change-case": "^4.1.2"
   }
 }
