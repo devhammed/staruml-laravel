@@ -19,39 +19,57 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  *
+ * Improved by: Hammed Oyedele (2021)
  */
+
 class CodeWriter {
   /**
    * CodeWriter
    * @constructor
    */
-  constructor() {
-    /** @member {Array.<string>} lines */
+  constructor () {
+    /** @type {Array<string>} lines */
     this.lines = []
 
-    /** @member {Array.<string>} indentations */
+    /** @type {Array<string>} indentations */
     this.indentations = []
   }
 
   /**
-   * Indent
+   * Indent.
    */
-  indent() {
+  indent () {
     this.indentations.push('    ')
   }
 
   /**
-   * Outdent
+   * Outdent.
    */
-  outdent() {
+  outdent () {
     this.indentations.splice(this.indentations.length - 1, 1)
   }
 
   /**
+   * Write to the last line or just append (by starting a new line of course 😁).
+   *
+   * @param {string} text
+   */
+  write (text) {
+    const lastLine = this.lines.pop()
+
+    if (lastLine === undefined) {
+      this.writeLine(text)
+    } else {
+      this.lines.push(lastLine + text)
+    }
+  }
+
+  /**
    * Write a line
+   *
    * @param {string} line
    */
-  writeLine(line) {
+  writeLine (line) {
     if (line) {
       this.lines.push(this.indentations.join('') + line)
     } else {
@@ -60,10 +78,20 @@ class CodeWriter {
   }
 
   /**
+   * Write lines
+   *
+   * @param {Array<string>} lines
+   */
+  writeLines (lines) {
+    lines.forEach(this.writeLine.bind(this))
+  }
+
+  /**
    * Return as all string data
+   *
    * @return {string}
    */
-  getData() {
+  getData () {
     return this.lines.join('\n')
   }
 }
