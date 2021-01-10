@@ -1,5 +1,6 @@
 const fs = require('fs')
 const path = require('path')
+const { noCase } = require('change-case')
 const CodeWriter = require('./code-writer')
 
 function generateCode (diagram, folder) {
@@ -8,16 +9,29 @@ function generateCode (diagram, folder) {
     .map(classView => classView.model)
     .filter(umlClass => umlClass.stereotype === 'Table')
     .forEach(table => {
+      const date = new Date()
       const writer = new CodeWriter()
+      const tableName = noCase(table.name, {
+        transform: (part, index, parts) =>
+          `${part}${parts.length - 1 === index ? '' : '_'}`.toLowerCase()
+      })
 
       // do something badass here!
 
-      fs.writeFileSync(path.join(folder, `${table.name}.php`), writer.getData())
+      // Laravel Migrations file format: <year>_<month>_<day>_<hour><minute><second>_create_<table>_table.php
+      fs.writeFileSync(
+        path.join(
+          folder,
+          `${date.getFullYear()}_${date.getMonth() +
+            1}_${date.getDate()}_${date.getHours()}${date.getMinutes()}${date.getSeconds()}_create_${tableName}_table.php`
+        ),
+        writer.getData()
+      )
     })
 }
 
 function getOutputFolderAndGenerateCode (diagram) {
-  const file = app.dialogs.showOpenDialog(
+  const files = app.dialogs.showOpenDialog(
     'Select a folder where generated codes to be located',
     null,
     null,
