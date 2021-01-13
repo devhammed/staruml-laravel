@@ -1,3 +1,5 @@
+// Auto-generated from https://laravel.com/docs/8.x/migrations#available-column-types
+// By running `$$('#collection-method-list [href^="#column-method"]').map(c => c.innerText)` in the devtools console.
 module.exports = [
   'bigIncrements',
   'bigInteger',
