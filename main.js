@@ -296,7 +296,7 @@ function generateMigrations (diagram, folder) {
 
 function getOutputFolderAndGenerateMigrations (diagram) {
   const files = app.dialogs.showOpenDialog(
-    'Select a folder where generated codes to be located',
+    'Select a folder where generated migrations will be located',
     null,
     null,
     { properties: ['openDirectory'] }
@@ -312,7 +312,7 @@ function handleGenerateCommand (diagram, folder) {
   if (!diagram || !diagram instanceof type.UMLClassDiagram) {
     app.elementPickerDialog
       .showDialog(
-        'Select a class diagram to generate the classes migrations',
+        'Select a class diagram to generate the migrations',
         null,
         type.UMLClassDiagram
       )
