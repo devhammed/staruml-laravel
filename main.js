@@ -4,6 +4,7 @@ const { noCase, pascalCase } = require('change-case')
 
 const baseEnum = require('./base-enum')
 const CodeWriter = require('./code-writer')
+const columnTypes = require('./column-types')
 
 function sanitizeTableName (name) {
   return noCase(name, {
@@ -106,7 +107,10 @@ function generateMigrations (diagram, folder) {
         }) => {
           writer.writeLine('$table->')
 
-          if (typeof dataType === 'string') {
+          if (
+            typeof dataType === 'string' &&
+            columnTypes.indexOf(dataType) !== -1
+          ) {
             writer.write(`${dataType}('${name}'`)
 
             if (
