@@ -117,6 +117,9 @@ function generateMigrations (diagram, folder) {
             }
           } else if (dataType instanceof type.UMLEnumeration) {
             writer.write(`enum('${name}', ${dataType.name}::values()`)
+          } else {
+            // I don't know what this person is thinking, let's just do `text` abeg...
+            writer.write(`text('${name}'`)
           }
 
           writer.write(')')
