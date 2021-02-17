@@ -199,25 +199,6 @@ function generateMigrations (diagram, folder) {
             if (stereotypeLower === 'in' || stereotypeLower === 'index') {
               return writer.writeLine(`$table->index('${name}');`)
             }
-
-            // if (stereotypeLower.indexOf('fk') === 0) {
-            //   const foreignDefs = stereotype.split(':')
-
-            //   if (foreignDefs.length >= 2) {
-            //     writer.writeLine(`$table->foreign('${name}')`)
-
-            //     writer.indent()
-
-            //     writer.writeLines([
-            //       `->references('${foreignDefs[2] || 'id'}')`,
-            //       `->on('${sanitizeTableName(foreignDefs[1])}')`,
-            //       `->onUpdate('${foreignDefs[3] || 'cascade'}')`,
-            //       `->onDelete('${foreignDefs[4] || 'cascade'}');`
-            //     ])
-
-            //     writer.outdent()
-            //   }
-            // }
           }
         }
       )
