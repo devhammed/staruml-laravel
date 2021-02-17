@@ -328,16 +328,26 @@ function handleLaravelGenerateCommand (diagram, folder) {
   if (!diagram || !diagram instanceof type.UMLClassDiagram) {
     app.elementPickerDialog
       .showDialog(
-        'Select a class diagram to generate the migrations',
+        'Select a model / class diagram to generate the migrations',
         null,
-        type.UMLClassDiagram
+        [type.UMLClassDiagram, type.UMLModel]
       )
       .then(function ({ buttonId, returnValue }) {
         if (buttonId === 'ok') {
-          if (!folder) {
-            getOutputFolderAndGenerateMigrations(returnValue)
+          const generate = classDiagram => {
+            if (!folder) {
+              getOutputFolderAndGenerateMigrations(classDiagram)
+            } else {
+              generateMigrations(classDiagram, folder)
+            }
+          }
+
+          if (returnValue instanceof type.UMLModel) {
+            returnValue.ownedElements
+              .filter(e => e instanceof type.UMLClassDiagram)
+              .forEach(generate)
           } else {
-            generateMigrations(returnValue, folder)
+            generate(returnValue)
           }
         }
       })
