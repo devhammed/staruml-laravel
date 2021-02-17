@@ -4,9 +4,9 @@
       "id": "tools",
       "submenu": [
         {
-          "label": "Generate Laravel Migrations...",
+          "command": "laravel:generate",
           "id": "tools.laravel.generate",
-          "command": "laravel:generate"
+          "label": "Generate Laravel Migrations..."
         }
       ]
     }
