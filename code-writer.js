@@ -96,7 +96,7 @@ class CodeWriter {
   }
 
   /**
-   * Start new migrations file.
+   * Start new migrations file template.
    *
    * @param {string} className
    * @param {string[]} extraHeaders
@@ -104,6 +104,10 @@ class CodeWriter {
    * @param {(w: CodeWriter) => {}} down
    */
   migration (className, extraHeaders, up, down) {
+    this.lines = []
+
+    this.indentations = []
+
     this.writeLines(
       ['<?php', ''].concat(extraHeaders, [
         'use Illuminate\\Support\\Facades\\Schema;',
@@ -156,6 +160,36 @@ class CodeWriter {
     this.outdent()
 
     this.writeLines(['}', ''])
+  }
+
+  /**
+   * Create a table modification template.
+   *
+   * @param {string} name
+   * @param {(ww: CodeWriter) => {}} cb
+   */
+  tableModification (name, cb) {
+    this.writeLine(`Schema::table('${name}', function (Blueprint $table) {`)
+
+    this.indent()
+
+    cb(this)
+
+    this.outdent()
+
+    this.writeLine('});')
+  }
+
+  /**
+   * Add a blank line after definition if index is not last.
+   *
+   * @param {number} index
+   * @param {any[]} array
+   */
+  addBlankLineIfNotLast (index, array) {
+    if (index !== array.length - 1) {
+      this.writeLine('')
+    }
   }
 }
 

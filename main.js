@@ -24,13 +24,17 @@ function sanitizeTableName (name) {
 /**
  * Generate Laravel Migrations Timestamp.
  *
+ * It will add 2 seconds to timestamp if `isForeign` is true (to maintain order).
+ *
+ * @param {boolean} isForeign
  * @returns {string} year_month_day_hourMinuteSecond
  */
-function getMigrationTimestamp () {
+function getMigrationTimestamp (isForeign = false) {
   const date = new Date()
+  const seconds = isForeign ? date.getSeconds() + 2 : date.getSeconds()
 
   return `${date.getFullYear()}_${date.getMonth() +
-    1}_${date.getDate()}_${date.getHours()}${date.getMinutes()}${date.getSeconds()}`
+    1}_${date.getDate()}_${date.getHours()}${date.getMinutes()}${seconds}`
 }
 
 /**
@@ -215,6 +219,67 @@ function generateMigrations (diagram, folder) {
     )
   })
 
+  if (associations.length > 0) {
+    const writer = new CodeWriter()
+    const tables = associations.reduce((acc, { end1, end2 }) => {
+      const table = sanitizeTableName(end1.reference.name)
+
+      acc[table] = (acc[table] || []).concat({
+        field: end1.name,
+        references: end2.name,
+        on: sanitizeTableName(end2.reference.name)
+      })
+
+      return acc
+    }, {})
+    const tablesNames = Object.keys(tables)
+
+    writer.migration(
+      'AddForeignKeysToTables',
+      [],
+      writer => {
+        tablesNames.forEach((tableName, index) => {
+          writer.tableModification(tableName, writer => {
+            tables[tableName].forEach(({ field, on, references }) => {
+              writer.writeLine(`$table->foreign('${field}')`)
+
+              writer.indent()
+
+              writer.writeLines([
+                `->references('${references}')`,
+                `->on('${on}')`,
+                `->onDelete('cascade');`
+              ])
+
+              writer.outdent()
+            })
+          })
+
+          writer.addBlankLineIfNotLast(index, tablesNames)
+        })
+      },
+      writer => {
+        tablesNames.forEach((tableName, index) => {
+          writer.tableModification(tableName, writer => {
+            tables[tableName].forEach(({ field }) => {
+              writer.writeLine(`$table->dropForeign('${field}');`)
+            })
+          })
+
+          writer.addBlankLineIfNotLast(index, tablesNames)
+        })
+      }
+    )
+
+    fs.writeFileSync(
+      path.join(
+        folder,
+        `${getMigrationTimestamp(true)}_add_foreign_keys_to_tables.php`
+      ),
+      writer.getData()
+    )
+  }
+
   if (enumerations.length > 0) {
     const enumsDir = path.join(folder, 'Enums')
 
@@ -246,10 +311,7 @@ function generateMigrations (diagram, folder) {
 
         writer.writeLine(`public const ${name} = '${name}';`)
 
-        // if not last item, add a blank line after definition...
-        if (index !== literals.length - 1) {
-          writer.writeLine('')
-        }
+        writer.addBlankLineIfNotLast(index, literals)
       })
 
       writer.outdent()
