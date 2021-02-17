@@ -10,6 +10,7 @@ const columnTypes = require('./column-types')
  * Generate a database compatible table name for UML class.
  *
  * @param {string} name
+ * @returns {string}
  */
 function sanitizeTableName (name) {
   return noCase(name, {
@@ -323,8 +324,7 @@ function getOutputFolderAndGenerateMigrations (diagram) {
   }
 }
 
-function handleGenerateCommand (diagram, folder) {
-  // If diagram is not assigned, popup ElementPicker
+function handleLaravelGenerateCommand (diagram, folder) {
   if (!diagram || !diagram instanceof type.UMLClassDiagram) {
     app.elementPickerDialog
       .showDialog(
@@ -334,13 +334,10 @@ function handleGenerateCommand (diagram, folder) {
       )
       .then(function ({ buttonId, returnValue }) {
         if (buttonId === 'ok') {
-          diagram = returnValue
-
-          // If folder is not assigned, popup Open Dialog to select a folder
           if (!folder) {
-            getOutputFolderAndGenerateMigrations(diagram)
+            getOutputFolderAndGenerateMigrations(returnValue)
           } else {
-            generateMigrations(diagram, folder)
+            generateMigrations(returnValue, folder)
           }
         }
       })
@@ -351,8 +348,6 @@ function handleGenerateCommand (diagram, folder) {
   }
 }
 
-function init () {
-  app.commands.register('laravel:generate', handleGenerateCommand)
+exports.init = function () {
+  app.commands.register('laravel:generate', handleLaravelGenerateCommand)
 }
-
-exports.init = init
