@@ -95,158 +95,115 @@ function generateMigrations (diagram, folder) {
     ]
     const databaseTableName = sanitizeTableName(table.name)
 
-    writer.writeLines(
-      ['<?php', ''].concat(
-        usedEnums.map(usedEnum => `use App\\Enums\\${usedEnum};`),
-        [
-          'use Illuminate\\Support\\Facades\\Schema;',
-          'use Illuminate\\Database\\Schema\\Blueprint;',
-          'use Illuminate\\Database\\Migrations\\Migration;',
-          '',
-          `class Create${pascalCase(table.name)}Table extends Migration`,
-          '{'
-        ]
-      )
-    )
+    writer.migration(
+      `Create${pascalCase(table.name)}Table`,
+      usedEnums.map(usedEnum => `use App\\Enums\\${usedEnum};`),
+      writer => {
+        writer.writeLine(
+          `Schema::create('${databaseTableName}', function (Blueprint $table) {`
+        )
 
-    writer.indent()
+        writer.indent()
 
-    writer.writeLines([
-      '/**',
-      ' * Run the migrations.',
-      ' *',
-      ' * @return void',
-      ' */',
-      'public function up()',
-      '{'
-    ])
+        table.attributes
+          .filter(attribute => timestampColumns.indexOf(attribute.name) === -1)
+          .forEach(
+            ({
+              name,
+              isID,
+              isUnique,
+              stereotype,
+              multiplicity,
+              defaultValue,
+              documentation,
+              type: dataType
+            }) => {
+              writer.writeLine('$table->')
 
-    writer.indent()
+              if (
+                typeof dataType === 'string' &&
+                columnTypes.indexOf(dataType) !== -1
+              ) {
+                writer.write(`${dataType}('${name}'`)
 
-    writer.writeLine(
-      `Schema::create('${databaseTableName}', function (Blueprint $table) {`
-    )
+                if (
+                  typesWithMultiplicity.indexOf(dataType) !== -1 &&
+                  multiplicity !== ''
+                ) {
+                  writer.write(', ' + multiplicity.split('..').join(', '))
+                }
+              } else if (dataType instanceof type.UMLEnumeration) {
+                writer.write(`enum('${name}', ${dataType.name}::values()`)
+              } else {
+                // I don't know what this person is thinking, let's just do `text` abeg...
+                writer.write(`text('${name}'`)
+              }
 
-    writer.indent()
+              writer.write(')')
 
-    table.attributes
-      .filter(attribute => timestampColumns.indexOf(attribute.name) === -1)
-      .forEach(
-        ({
-          name,
-          isID,
-          isUnique,
-          stereotype,
-          multiplicity,
-          defaultValue,
-          documentation,
-          type: dataType
-        }) => {
-          writer.writeLine('$table->')
+              if (isUnique) {
+                writer.write('->unique()')
+              }
 
-          if (
-            typeof dataType === 'string' &&
-            columnTypes.indexOf(dataType) !== -1
-          ) {
-            writer.write(`${dataType}('${name}'`)
+              if (defaultValue !== '') {
+                if (defaultValue.toLowerCase() === 'null') {
+                  writer.write('->nullable()')
+                } else {
+                  writer.write(
+                    `->default(${
+                      dataType instanceof type.UMLEnumeration
+                        ? `${dataType.name}::${defaultValue}`
+                        : defaultValue
+                    })`
+                  )
+                }
+              }
 
-            if (
-              typesWithMultiplicity.indexOf(dataType) !== -1 &&
-              multiplicity !== ''
-            ) {
-              writer.write(', ' + multiplicity.split('..').join(', '))
+              // if we have multiple ids, we will handle it later...
+              if (isID && ids.length <= 1) {
+                writer.write('->primary()')
+              }
+
+              if (documentation !== '') {
+                writer.write(
+                  `->comment('${documentation.replace("'", "\\'")}')`
+                )
+              }
+
+              writer.write(';')
+
+              if (stereotype !== null) {
+                const stereotypeLower = stereotype.toLowerCase()
+
+                if (stereotypeLower === 'in' || stereotypeLower === 'index') {
+                  return writer.writeLine(`$table->index('${name}');`)
+                }
+              }
             }
-          } else if (dataType instanceof type.UMLEnumeration) {
-            writer.write(`enum('${name}', ${dataType.name}::values()`)
-          } else {
-            // I don't know what this person is thinking, let's just do `text` abeg...
-            writer.write(`text('${name}'`)
-          }
+          )
 
-          writer.write(')')
-
-          if (isUnique) {
-            writer.write('->unique()')
-          }
-
-          if (defaultValue !== '') {
-            if (defaultValue.toLowerCase() === 'null') {
-              writer.write('->nullable()')
-            } else {
-              writer.write(
-                `->default(${
-                  dataType instanceof type.UMLEnumeration
-                    ? `${dataType.name}::${defaultValue}`
-                    : defaultValue
-                })`
-              )
-            }
-          }
-
-          // if we have multiple ids, we will handle it later...
-          if (isID && ids.length <= 1) {
-            writer.write('->primary()')
-          }
-
-          if (documentation !== '') {
-            writer.write(`->comment('${documentation.replace("'", "\\'")}')`)
-          }
-
-          writer.write(';')
-
-          if (stereotype !== null) {
-            const stereotypeLower = stereotype.toLowerCase()
-
-            if (stereotypeLower === 'in' || stereotypeLower === 'index') {
-              return writer.writeLine(`$table->index('${name}');`)
-            }
-          }
+        // handle composite keys
+        if (ids.length > 1) {
+          writer.writeLine(`$table->primary([${ids.join(', ')}]);`)
         }
-      )
 
-    // handle composite keys
-    if (ids.length > 1) {
-      writer.writeLine(`$table->primary([${ids.join(', ')}]);`)
-    }
+        // handle timestamps
+        if (
+          table.attributes.some(
+            attribute => timestampColumns.indexOf(attribute.name) !== -1
+          )
+        ) {
+          writer.writeLine('$table->timestamps();')
+        }
 
-    // handle timestamps
-    if (
-      table.attributes.some(
-        attribute => timestampColumns.indexOf(attribute.name) !== -1
-      )
-    ) {
-      writer.writeLine('$table->timestamps();')
-    }
+        writer.outdent()
 
-    writer.outdent()
-
-    writer.writeLine('});')
-
-    writer.outdent()
-
-    writer.writeLines([
-      '}',
-      '',
-      '/**',
-      ' * Reverse the migrations.',
-      ' *',
-      ' * @return void',
-      ' */',
-      'public function down()',
-      '{'
-    ])
-
-    writer.indent()
-
-    writer.writeLine(`Schema::dropIfExists('${databaseTableName}');`)
-
-    writer.outdent()
-
-    writer.writeLine('}')
-
-    writer.outdent()
-
-    writer.writeLines(['}', ''])
+        writer.writeLine('});')
+      },
+      writer => {
+        writer.writeLine(`Schema::dropIfExists('${databaseTableName}');`)
+      }
+    )
 
     // Laravel Migrations file format: <timestamp>_create_<table>_table.php
     fs.writeFileSync(
