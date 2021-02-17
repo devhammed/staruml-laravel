@@ -240,7 +240,9 @@ function generateMigrations (diagram, folder) {
       writer => {
         tablesNames.forEach((tableName, index) => {
           writer.tableModification(tableName, writer => {
-            tables[tableName].forEach(({ field, on, references }) => {
+            const foreignKeys = tables[tableName]
+
+            foreignKeys.forEach(({ field, on, references }, i) => {
               writer.writeLine(`$table->foreign('${field}')`)
 
               writer.indent()
@@ -252,6 +254,8 @@ function generateMigrations (diagram, folder) {
               ])
 
               writer.outdent()
+
+              writer.addBlankLineIfNotLast(i, foreignKeys)
             })
           })
 
@@ -261,9 +265,19 @@ function generateMigrations (diagram, folder) {
       writer => {
         tablesNames.forEach((tableName, index) => {
           writer.tableModification(tableName, writer => {
-            tables[tableName].forEach(({ field }) => {
-              writer.writeLine(`$table->dropForeign('${field}');`)
-            })
+            const foreignKeysToDrop = tables[tableName]
+              .reduce((acc, { field }) => {
+                const fieldString = `'${field}'`
+
+                if (acc.indexOf(fieldString) === -1) {
+                  acc.push(fieldString)
+                }
+
+                return acc
+              }, [])
+              .join(', ')
+
+            writer.writeLine(`$table->dropForeign([${foreignKeysToDrop}]);`)
           })
 
           writer.addBlankLineIfNotLast(index, tablesNames)
