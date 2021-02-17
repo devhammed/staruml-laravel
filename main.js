@@ -6,6 +6,11 @@ const baseEnum = require('./base-enum')
 const CodeWriter = require('./code-writer')
 const columnTypes = require('./column-types')
 
+/**
+ * Generate a database compatible table name for UML class.
+ *
+ * @param {string} name
+ */
 function sanitizeTableName (name) {
   return noCase(name, {
     transform: (part, index, parts) =>
@@ -15,24 +20,55 @@ function sanitizeTableName (name) {
     .join('')
 }
 
+/**
+ * Generate Laravel Migrations Timestamp.
+ *
+ * @returns {string} year_month_day_hourMinuteSecond
+ */
+function getMigrationTimestamp () {
+  const date = new Date()
+
+  return `${date.getFullYear()}_${date.getMonth() +
+    1}_${date.getDate()}_${date.getHours()}${date.getMinutes()}${date.getSeconds()}`
+}
+
+/**
+ * Check if UML class is a table.
+ *
+ * @param {type.UMLClass} umlClass
+ * @returns {boolean}
+ */
+function isClassATable (umlClass) {
+  return umlClass.stereotype.toLowerCase() === 'table'
+}
+
+/**
+ * Get model views from diagram.
+ *
+ * @param {type.UMLClassDiagram} diagram
+ * @param {type.UMLView} type
+ * @returns {any[]}
+ */
 function getViews (diagram, type) {
   return diagram.ownedViews
     .filter(view => view instanceof type)
-    .map(typeView => typeView.model)
+    .map(view => view.model)
 }
 
 function generateMigrations (diagram, folder) {
-  const tables = getViews(diagram, type.UMLClassView).filter(
-    umlClass => umlClass.stereotype === 'Table'
-  )
+  const tables = getViews(diagram, type.UMLClassView).filter(isClassATable)
   const enumerations = getViews(diagram, type.UMLEnumerationView)
+  const associations = getViews(diagram, type.UMLAssociationView).filter(
+    association =>
+      isClassATable(association.end1.reference) &&
+      isClassATable(association.end2.reference)
+  )
 
   if (!tables.length) {
     return app.toast.error('There is no migrations to generate!')
   }
 
   tables.forEach(table => {
-    const date = new Date()
     const writer = new CodeWriter()
     const ids = table.attributes
       .filter(attribute => attribute.isID)
@@ -164,24 +200,24 @@ function generateMigrations (diagram, folder) {
               return writer.writeLine(`$table->index('${name}');`)
             }
 
-            if (stereotypeLower.indexOf('fk') === 0) {
-              const foreignDefs = stereotype.split(':')
+            // if (stereotypeLower.indexOf('fk') === 0) {
+            //   const foreignDefs = stereotype.split(':')
 
-              if (foreignDefs.length >= 2) {
-                writer.writeLine(`$table->foreign('${name}')`)
+            //   if (foreignDefs.length >= 2) {
+            //     writer.writeLine(`$table->foreign('${name}')`)
 
-                writer.indent()
+            //     writer.indent()
 
-                writer.writeLines([
-                  `->references('${foreignDefs[2] || 'id'}')`,
-                  `->on('${sanitizeTableName(foreignDefs[1])}')`,
-                  `->onUpdate('${foreignDefs[3] || 'cascade'}')`,
-                  `->onDelete('${foreignDefs[4] || 'cascade'}');`
-                ])
+            //     writer.writeLines([
+            //       `->references('${foreignDefs[2] || 'id'}')`,
+            //       `->on('${sanitizeTableName(foreignDefs[1])}')`,
+            //       `->onUpdate('${foreignDefs[3] || 'cascade'}')`,
+            //       `->onDelete('${foreignDefs[4] || 'cascade'}');`
+            //     ])
 
-                writer.outdent()
-              }
-            }
+            //     writer.outdent()
+            //   }
+            // }
           }
         }
       )
@@ -230,12 +266,11 @@ function generateMigrations (diagram, folder) {
 
     writer.writeLines(['}', ''])
 
-    // Laravel Migrations file format: <year>_<month>_<day>_<hour><minute><second>_create_<table>_table.php
+    // Laravel Migrations file format: <timestamp>_create_<table>_table.php
     fs.writeFileSync(
       path.join(
         folder,
-        `${date.getFullYear()}_${date.getMonth() +
-          1}_${date.getDate()}_${date.getHours()}${date.getMinutes()}${date.getSeconds()}_create_${databaseTableName}_table.php`
+        `${getMigrationTimestamp()}_create_${databaseTableName}_table.php`
       ),
       writer.getData()
     )
@@ -290,7 +325,7 @@ function generateMigrations (diagram, folder) {
   }
 
   app.toast.info(
-    `${tables.length} migrations and ${enumerations.length} enums generated successfully.`
+    `${tables.length} migrations, ${enumerations.length} enums and ${associations.length} associations generated successfully.`
   )
 }
 
