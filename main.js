@@ -48,7 +48,7 @@ function getClassAssociations (umlClass) {
 
 function generateMigrations (diagram, folder) {
   const tables = getViews(diagram, type.UMLClassView).filter(
-    umlClass => umlClass.stereotype.toLowerCase() === 'table'
+    umlClass => (umlClass.stereotype || '').toLowerCase() === 'table'
   )
   const enumerations = getViews(diagram, type.UMLEnumerationView)
 
