@@ -97,7 +97,9 @@ function generateMigrations (diagram, folder) {
 
       writer.writeLines(
         ['<?php', ''].concat(
-          usedEnums.map(usedEnum => `use App\\Enums\\${usedEnum};`),
+          usedEnums
+            .map(usedEnum => `use App\\Enums\\${usedEnum};`)
+            .sort((a, b) => a.length - b.length),
           [
             'use Illuminate\\Support\\Facades\\Schema;',
             'use Illuminate\\Database\\Schema\\Blueprint;',
@@ -228,10 +230,6 @@ function generateMigrations (diagram, folder) {
         ])
 
         writer.outdent()
-
-        if (index !== arr.length - 1) {
-          writer.writeLine('')
-        }
       })
 
       writer.outdent()
@@ -268,8 +266,12 @@ function generateMigrations (diagram, folder) {
       fs.writeFileSync(
         path.join(
           folder,
-          `${date.getFullYear()}_${date.getMonth() +
-            1}_${date.getDate()}_${date.getHours()}${date.getMinutes()}${date.getSeconds() +
+          `${date.getFullYear()}_${(date.getMonth() + 1)
+            .toString()
+            .padStart(
+              2,
+              '0'
+            )}_${date.getDate()}_${date.getHours()}${date.getMinutes()}${date.getSeconds() +
             tableIndex}_create_${databaseTableName}_table.php`
         ),
         writer.getData()
@@ -365,6 +367,10 @@ function handleLaravelGenerateCommand (diagram, folder) {
   }
 }
 
-exports.init = function init () {
-  app.commands.register('laravel:generate', handleLaravelGenerateCommand)
+exports.init = function () {
+  app.commands.register(
+    'laravel:generate',
+    handleLaravelGenerateCommand,
+    'Laravel Generate'
+  )
 }
