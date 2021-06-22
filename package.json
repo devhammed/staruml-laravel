@@ -3,7 +3,7 @@
   "title": "StarUML Laravel",
   "description": "Generate Laravel Migrations from StarUML UML Class Diagrams.",
   "homepage": "https://github.com/devhammed/staruml-laravel",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "main": "main.js",
   "keywords": ["staruml", "laravel"],
   "author": {
