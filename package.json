@@ -3,12 +3,9 @@
   "title": "StarUML Laravel",
   "description": "Generate Laravel Migrations from StarUML UML Class Diagrams.",
   "homepage": "https://github.com/devhammed/staruml-laravel",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "main": "main.js",
-  "keywords": [
-    "staruml",
-    "laravel"
-  ],
+  "keywords": ["staruml", "laravel"],
   "author": {
     "name": "Hammed Oyedele",
     "email": "itz.harmid@gmail.com",
