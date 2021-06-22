@@ -1,14 +1,11 @@
 {
   "menu": [
     {
-      "id": "tools",
-      "submenu": [
-        {
-          "command": "laravel:generate",
-          "id": "tools.laravel.generate",
-          "label": "Generate Laravel Migrations..."
-        }
-      ]
+      "position": "after",
+      "relative-id": "tools",
+      "id": "laravel.export",
+      "command": "laravel:export",
+      "label": "Export to Laravel"
     }
   ]
 }

@@ -46,6 +46,16 @@ function getClassAssociations (umlClass) {
   )
 }
 
+/**
+ * Pad Value.
+ *
+ * @param {any} value
+ * @returns {string}
+ */
+function padValue (value) {
+  return value.toString().padStart(2, '0')
+}
+
 function generateMigrations (diagram, folder) {
   const tables = getViews(diagram, type.UMLClassView).filter(
     umlClass => (umlClass.stereotype || '').toLowerCase() === 'table'
@@ -266,13 +276,13 @@ function generateMigrations (diagram, folder) {
       fs.writeFileSync(
         path.join(
           folder,
-          `${date.getFullYear()}_${(date.getMonth() + 1)
-            .toString()
-            .padStart(
-              2,
-              '0'
-            )}_${date.getDate()}_${date.getHours()}${date.getMinutes()}${date.getSeconds() +
-            tableIndex}_create_${databaseTableName}_table.php`
+          `${date.getFullYear()}_${padValue(date.getMonth() + 1)}_${padValue(
+            date.getDate()
+          )}_${padValue(date.getHours())}${padValue(
+            date.getMinutes()
+          )}${padValue(
+            date.getSeconds() + tableIndex
+          )}_create_${databaseTableName}_table.php`
         ),
         writer.getData()
       )
@@ -344,33 +354,31 @@ function getOutputFolderAndGenerateMigrations (diagram) {
   }
 }
 
-function handleLaravelGenerateCommand (diagram, folder) {
-  if (!diagram || !diagram instanceof type.UMLClassDiagram) {
-    app.elementListPickerDialog
-      .showDialog(
-        'Select a class diagram to generate the migrations from',
-        app.repository.select('@UMLClassDiagram')
-      )
-      .then(function ({ buttonId, returnValue }) {
-        if (buttonId === 'ok') {
-          if (!folder) {
-            getOutputFolderAndGenerateMigrations(returnValue)
-          } else {
-            generateMigrations(returnValue, folder)
-          }
-        }
-      })
-  } else if (!folder) {
-    getOutputFolderAndGenerateMigrations(diagram)
-  } else {
-    generateMigrations(diagram, folder)
-  }
-}
-
 exports.init = function () {
   app.commands.register(
-    'laravel:generate',
-    handleLaravelGenerateCommand,
-    'Laravel Generate'
+    'laravel:export',
+    function (diagram, folder) {
+      if (!diagram || !diagram instanceof type.UMLClassDiagram) {
+        app.elementListPickerDialog
+          .showDialog(
+            'Select a class diagram to generate the migrations from',
+            app.repository.select('@UMLClassDiagram')
+          )
+          .then(function ({ buttonId, returnValue }) {
+            if (buttonId === 'ok') {
+              if (!folder) {
+                getOutputFolderAndGenerateMigrations(returnValue)
+              } else {
+                generateMigrations(returnValue, folder)
+              }
+            }
+          })
+      } else if (!folder) {
+        getOutputFolderAndGenerateMigrations(diagram)
+      } else {
+        generateMigrations(diagram, folder)
+      }
+    },
+    'Export to Laravel'
   )
 }
