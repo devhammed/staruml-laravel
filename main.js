@@ -356,7 +356,7 @@ function getOutputFolderAndGenerateMigrations (diagram) {
 
 exports.init = function () {
   app.commands.register(
-    'laravel:export',
+    'laravel:generate',
     function (diagram, folder) {
       if (!diagram || !diagram instanceof type.UMLClassDiagram) {
         app.elementListPickerDialog
@@ -379,6 +379,6 @@ exports.init = function () {
         generateMigrations(diagram, folder)
       }
     },
-    'Export to Laravel'
+    'Generate Laravel Migrations'
   )
 }
