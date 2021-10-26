@@ -236,7 +236,9 @@ function generateMigrations (diagram, folder) {
         writer.writeLines([
           `->references('${end2.name}')`,
           `->on('${sanitizeTableName(end2.reference.name)}')`,
-          `->onDelete('cascade');`
+          `->onDelete('${
+            end1.defaultValue.length ? end1.defaultValue : 'cascade'
+          }');`
         ])
 
         writer.outdent()
